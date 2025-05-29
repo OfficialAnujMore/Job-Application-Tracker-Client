@@ -6,7 +6,7 @@ import {
 } from '@mui/material';
 import { Search as SearchIcon } from '@mui/icons-material';
 import { colors, shape } from '../theme/constants';
-import { ApplicationStatus, applicationStatuses } from '../types/application';
+import { ApplicationStatus, dropdownStatuses } from '../types/application';
 import Card from './common/Card';
 import TextField from './common/TextField';
 
@@ -85,9 +85,9 @@ const ApplicationFilters: React.FC<ApplicationFiltersProps> = ({
         }}
       >
         <MenuItem value="" sx={{ color: colors.text.primary }}>
-          All Statuses
+          All Applications
         </MenuItem>
-        {applicationStatuses.map((status) => (
+        {dropdownStatuses.map((status) => (
           <MenuItem 
             key={status} 
             value={status}

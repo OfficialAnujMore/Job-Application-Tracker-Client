@@ -9,7 +9,7 @@ import {
   Box,
 } from '@mui/material';
 import { applications } from '../services/api';
-import { ApplicationStatus, applicationStatuses } from '../types/application';
+import { ApplicationStatus, dropdownStatuses } from '../types/application';
 import { applicationSchema } from '../utils/validation';
 import { JOB_TYPES } from '../utils/constants';
 import { layoutStyles, componentStyles } from '../utils/styles';
@@ -42,7 +42,7 @@ const ApplicationForm: React.FC = () => {
       jobType: JOB_TYPES[0],
       location: '',
       dateApplied: new Date().toISOString().split('T')[0],
-      status: applicationStatuses[0],
+      status: dropdownStatuses[0],
       applicationUrl: '',
       meetingUrls: [''],
       notes: '',
@@ -73,8 +73,10 @@ const ApplicationForm: React.FC = () => {
           const data = await applications.getAll();
           const application = data.find((app) => app._id === id);
           if (application) {
+            const status = application.status === 'Applied' ? dropdownStatuses[0] : application.status;
             formik.setValues({
               ...application,
+              status,
               dateApplied: new Date(application.dateApplied)
                 .toISOString()
                 .split('T')[0],
@@ -171,7 +173,7 @@ const ApplicationForm: React.FC = () => {
                   error={formik.touched.status && Boolean(formik.errors.status)}
                   helperText={formik.touched.status && formik.errors.status}
                 >
-                  {applicationStatuses.map((status) => (
+                  {dropdownStatuses.map((status) => (
                     <MenuItem key={status} value={status}>
                       {status}
                     </MenuItem>

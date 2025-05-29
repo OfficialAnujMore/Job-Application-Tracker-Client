@@ -1,5 +1,5 @@
 import * as yup from 'yup';
-import { ApplicationStatus, applicationStatuses } from '../types/application';
+import { ApplicationStatus, applicationStatuses, dropdownStatuses } from '../types/application';
 
 export const loginSchema = yup.object({
   email: yup
@@ -34,37 +34,38 @@ export const registerSchema = yup.object({
 export const applicationSchema = yup.object({
   companyName: yup
     .string()
-    .required('Company name is required'),
+    .required('Company name is required')
+    .min(2, 'Company name should be at least 2 characters'),
   jobTitle: yup
     .string()
-    .required('Job title is required'),
+    .required('Job title is required')
+    .min(2, 'Job title should be at least 2 characters'),
   jobType: yup
     .string()
-    .oneOf(['Full-time', 'Part-time', 'Contract', 'Internship'], 'Invalid job type')
     .required('Job type is required'),
   location: yup
     .string()
     .required('Location is required'),
   dateApplied: yup
     .date()
-    .max(new Date(), 'Date cannot be in the future')
-    .required('Application date is required'),
+    .required('Date applied is required')
+    .max(new Date(), 'Date cannot be in the future'),
   status: yup
     .string()
-    .oneOf(applicationStatuses, 'Invalid status')
-    .required('Status is required'),
+    .required('Status is required')
+    .oneOf(dropdownStatuses, 'Invalid status'),
   applicationUrl: yup
     .string()
-    .url('Enter a valid URL')
+    .url('Must be a valid URL')
     .nullable(),
   meetingUrls: yup
     .array()
     .of(
       yup
         .string()
-        .url('Enter a valid URL')
-    )
-    .nullable(),
+        .url('Must be a valid URL')
+        .nullable()
+    ),
   notes: yup
     .string()
     .nullable(),

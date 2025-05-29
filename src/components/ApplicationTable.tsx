@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Table,
@@ -33,6 +33,11 @@ const ApplicationTable: React.FC<ApplicationTableProps> = ({ applications, onDel
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  // Reset to first page when data changes
+  useEffect(() => {
+    setPage(0);
+  }, [applications]);
 
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);

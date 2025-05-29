@@ -1,6 +1,10 @@
 export const applicationStatuses = ['Applied', 'In Progress', 'Interview', 'Rejected', 'Accepted'] as const;
 export type ApplicationStatus = typeof applicationStatuses[number];
 
+// Separate array for dropdown options (excluding Applied)
+export const dropdownStatuses = ['In Progress', 'Interview', 'Rejected', 'Accepted'] as const;
+export type DropdownStatus = typeof dropdownStatuses[number];
+
 export const statusColors: Record<ApplicationStatus, string> = {
   'Applied': '#3f51b5',
   'In Progress': '#ff9800',

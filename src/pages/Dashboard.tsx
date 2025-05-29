@@ -15,7 +15,6 @@ import {
 import {
   Add as AddIcon,
   FilterAlt as FilterIcon,
-  RestartAlt as ResetIcon,
   Logout as LogoutIcon,
 } from '@mui/icons-material';
 import { applications } from '../services/api';
@@ -24,7 +23,8 @@ import {
   Application, 
   ApplicationStats, 
   ApplicationStatus,
-  applicationStatuses,
+  dropdownStatuses,
+  applicationStatuses
 } from '../types/application';
 import Logo from '../components/Logo';
 import ApplicationTable from '../components/ApplicationTable';
@@ -32,6 +32,7 @@ import ApplicationFilters from '../components/ApplicationFilters';
 import { colors, shadows, shape, transitions } from '../theme/constants';
 import Card from '../components/common/Card';
 import Button from '../components/common/Button';
+import ConfirmationModal from '../components/common/ConfirmationModal';
 
 const statusColors: Record<ApplicationStatus, string> = {
   'Applied': '#4CAF50',
@@ -46,12 +47,12 @@ const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const [applicationList, setApplicationList] = useState<Application[]>([]);
   const [stats, setStats] = useState<ApplicationStats[]>([]);
-  const [activeFilter, setActiveFilter] = useState<ApplicationStatus | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | ''>('');
-  const [priorityFilter, setPriorityFilter] = useState('All');
+  const [statusFilter, setStatusFilter] = useState<ApplicationStatus | ''>(dropdownStatuses[0]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [applicationToDelete, setApplicationToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchApplications();
@@ -88,54 +89,51 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    try {
-      setError(null);
-      await applications.delete(id);
-      fetchApplications();
-      fetchStats();
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
+  const handleDeleteClick = (id: string) => {
+    setApplicationToDelete(id);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (applicationToDelete) {
+      try {
+        setError(null);
+        await applications.delete(applicationToDelete);
+        fetchApplications();
+        fetchStats();
+      } catch (err) {
+        if (err instanceof Error) {
+          setError(err.message);
+        }
+      } finally {
+        setDeleteModalOpen(false);
+        setApplicationToDelete(null);
       }
     }
   };
 
-  const handleFilterClick = (status: ApplicationStatus) => {
-    setActiveFilter(status === activeFilter ? null : status);
+  const handleDeleteCancel = () => {
+    setDeleteModalOpen(false);
+    setApplicationToDelete(null);
   };
 
-  const resetFilter = () => {
-    setActiveFilter(null);
+  const handleStatusFilter = (status: ApplicationStatus | '') => {
+    setStatusFilter(status);
+    if (status === '') {
+      setSearchQuery('');
+    }
   };
 
   const getStatusCount = (status: ApplicationStatus) => {
-    const stat = stats.find(s => s._id === status);
-    return stat ? stat.count : 0;
+    if (status === 'Applied') {
+      return applicationList.length;
+    }
+    return applicationList.filter(app => app.status === status).length;
   };
 
   const handleLogout = () => {
     logout();
     navigate('/login');
-  };
-
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
-    // Implement search logic
-  };
-
-  const handleStatusFilter = (status: string) => {
-    setStatusFilter(status as ApplicationStatus | '');
-    // Implement status filter logic
-  };
-
-  const handlePriorityFilter = (priority: string) => {
-    setPriorityFilter(priority);
-    // Implement priority filter logic
-  };
-
-  const handleCloseError = () => {
-    setError(null);
   };
 
   const filteredApplications = applicationList.filter((app) => {
@@ -187,7 +185,7 @@ const Dashboard: React.FC = () => {
             </Typography>
           </Box>
           <Box display="flex" gap={2}>
-          <Button
+            <Button
               variant="contained"
               startIcon={<AddIcon />}
               onClick={() => navigate('/application')}
@@ -198,20 +196,16 @@ const Dashboard: React.FC = () => {
               <IconButton
                 onClick={handleLogout}
                 sx={{
+                  bgcolor: alpha(colors.error.main, 0.1),
                   color: colors.error.main,
-                  border: `1px solid ${colors.border.main}`,
-                  borderRadius: shape.borderRadius,
-                  transition: transitions.standard,
                   '&:hover': {
-                    bgcolor: alpha(colors.error.main, 0.1),
-                    borderColor: colors.border.dark,
+                    bgcolor: alpha(colors.error.main, 0.2),
                   }
                 }}
               >
                 <LogoutIcon />
               </IconButton>
             </Tooltip>
-            
           </Box>
         </Box>
 
@@ -225,8 +219,8 @@ const Dashboard: React.FC = () => {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  cursor: 'pointer',
-                  bgcolor: activeFilter === status 
+                  cursor: status !== 'Applied' ? 'pointer' : 'default',
+                  bgcolor: statusFilter === status 
                     ? alpha(statusColors[status], 0.1)
                     : colors.background.paper,
                   position: 'relative',
@@ -241,7 +235,7 @@ const Dashboard: React.FC = () => {
                     backgroundColor: statusColors[status],
                   }
                 }}
-                onClick={() => handleFilterClick(status)}
+                onClick={() => status !== 'Applied' && handleStatusFilter(status)}
               >
                 <Typography 
                   variant="h4" 
@@ -263,7 +257,7 @@ const Dashboard: React.FC = () => {
                     fontWeight: 500
                   }}
                 >
-                  <FilterIcon sx={{ fontSize: 16 }} />
+                  <FilterIcon sx={{ fontSize: 16, visibility: status === 'Applied' ? 'hidden' : 'visible' }} />
                   {status}
                 </Typography>
               </Card>
@@ -276,44 +270,33 @@ const Dashboard: React.FC = () => {
           searchQuery={searchQuery}
           statusFilter={statusFilter}
           onSearch={setSearchQuery}
-          onStatusFilter={setStatusFilter}
+          onStatusFilter={handleStatusFilter}
         />
 
-        {/* Table with Reset Filter Button */}
-        <Box sx={{ position: 'relative' }}>
-          {(activeFilter || searchQuery || statusFilter) && (
-            <Button
-              variant="outlined"
-              startIcon={<ResetIcon />}
-              onClick={() => {
-                resetFilter();
-                setSearchQuery('');
-                setStatusFilter('');
-              }}
-              sx={{
-                position: 'absolute',
-                right: 0,
-                top: -48,
-              }}
-            >
-              Reset Filters
-            </Button>
-          )}
-          <ApplicationTable 
-            applications={filteredApplications}
-            onDelete={handleDelete}
-          />
-        </Box>
+        {/* Table */}
+        <ApplicationTable 
+          applications={filteredApplications}
+          onDelete={handleDeleteClick}
+        />
+
+        {/* Confirmation Modal */}
+        <ConfirmationModal
+          open={deleteModalOpen}
+          title="Delete Application"
+          message="Are you sure you want to delete this application? This action cannot be undone."
+          onConfirm={handleDeleteConfirm}
+          onCancel={handleDeleteCancel}
+        />
 
         {/* Error Snackbar */}
         <Snackbar
           open={!!error}
           autoHideDuration={6000}
-          onClose={handleCloseError}
+          onClose={() => setError(null)}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
           <Alert
-            onClose={handleCloseError}
+            onClose={() => setError(null)}
             severity="error"
             variant="filled"
             sx={{ width: '100%' }}
