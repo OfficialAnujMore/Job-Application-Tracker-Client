@@ -1,9 +1,9 @@
-export const APP_NAME = 'Application Tracker';
+export const APP_NAME = process.env.REACT_APP_NAME || 'Application Tracker';
 export const APP_VERSION = '1.0.0';
 
 export const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
-export const TOKEN_KEY = 'app_token';
-export const USER_KEY = 'app_user';
+export const TOKEN_KEY = process.env.REACT_APP_TOKEN_KEY || 'app_token';
+export const USER_KEY = process.env.REACT_APP_USER_KEY || 'app_user';
 
 export const ROWS_PER_PAGE_OPTIONS = [5, 10, 25];
 export const DEFAULT_ROWS_PER_PAGE = 10;
@@ -46,9 +46,9 @@ export const SUCCESS_MESSAGES = {
 } as const;
 
 export const LOCAL_STORAGE_KEYS = {
-  THEME: 'app_theme',
-  LANGUAGE: 'app_language',
-  SETTINGS: 'app_settings',
+  THEME: process.env.REACT_APP_THEME_KEY || 'app_theme',
+  LANGUAGE: process.env.REACT_APP_LANGUAGE_KEY || 'app_language',
+  SETTINGS: process.env.REACT_APP_SETTINGS_KEY || 'app_settings',
 } as const;
 
 export const BREAKPOINTS = {
